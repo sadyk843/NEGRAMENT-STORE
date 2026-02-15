@@ -89,6 +89,77 @@ const categories = {
     }
 };
 
+// ===== ТАБЛИЦА ЛИДЕРОВ =====
+let leaderboard = [];
+
+bot.on('web_app_data', (msg) => {
+    const data = JSON.parse(msg.web_app_data.data);
+    
+    if (data.type === 'game_result') {
+        // Сохраняем результат игры
+        leaderboard.push({
+            user: msg.from.username || 'Игрок',
+            game: data.game,
+            score: data.score,
+            date: new Date().toLocaleString()
+        });
+        
+        // Сортируем и оставляем топ-10
+        leaderboard.sort((a, b) => b.score - a.score);
+        leaderboard = leaderboard.slice(0, 10);
+        
+        bot.sendMessage(msg.chat.id, `🎮 Игра завершена!\nТвой результат: ${data.score} очков`);
+    }
+    
+    if (data.type === 'create_league') {
+        // Создаём частную лигу
+        bot.sendMessage(msg.chat.id, 
+            `👥 Частная лига создана!\n\nПригласи друзей командой /invite @${msg.from.username}`
+        );
+    }
+    
+    if (data.type === 'order') {
+        bot.sendMessage(ADMIN_ID,
+            `🆕 **НОВЫЙ ЗАКАЗ**\n\n` +
+            `👤 **Покупатель:** @${msg.from.username || 'нет'}\n` +
+            `📦 **Товар:** ${data.item}\n` +
+            `💰 **Сумма:** ${data.price} ₽`,
+            { parse_mode: 'Markdown' }
+        );
+        
+        bot.sendMessage(msg.chat.id,
+            `✅ **ЗАКАЗ ОФОРМЛЕН**\n\n` +
+            `📦 ${data.item}\n💰 ${data.price} ₽\n\n` +
+            `💳 **Реквизиты:** 89324035777 (Озон Банк)`
+        );
+    }
+});
+
+// Команда /top
+bot.onText(/\/top/, (msg) => {
+    if (leaderboard.length === 0) {
+        bot.sendMessage(msg.chat.id, '🏆 Таблица лидеров пока пуста');
+        return;
+    }
+    
+    let text = '🏆 **ТОП-10 ИГРОКОВ**\n\n';
+    leaderboard.forEach((player, index) => {
+        text += `${index + 1}. @${player.user} — ${player.score} очков\n`;
+    });
+    
+    bot.sendMessage(msg.chat.id, text, { parse_mode: 'Markdown' });
+});
+
+// Команда /invite
+bot.onText(/\/invite/, (msg) => {
+    const inviteLink = `https://t.me/${bot.options.username}?start=invite_${msg.from.id}`;
+    bot.sendMessage(msg.chat.id,
+        `👥 **Пригласи друга**\n\n` +
+        `Отправь эту ссылку другу:\n${inviteLink}\n\n` +
+        `Когда друг перейдёт по ссылке, вы оба получите +100 очков!`
+    );
+});
+
 // ===== КОМАНДА /start =====
 bot.onText(/\/start/, (msg) => {
     const chatId = msg.chat.id;
@@ -395,3 +466,4 @@ bot.on('callback_query', async (query) => {
 });
 
 console.log('✅ БОТ С КАТАЛОГОМ ЗАПУЩЕН');
+
