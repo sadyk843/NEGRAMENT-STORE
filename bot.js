@@ -28,37 +28,34 @@ bot.onText(/\/start/, (msg) => {
 
 // ОБРАБОТЧИК ЗАКАЗОВ (ловит данные из WebApp)
 bot.on('message', async (msg) => {
-    // Проверяем, есть ли данные от WebApp
-    if (msg.web_app_data && msg.web_app_data.data) {
+    // 1. Проверка: пришло ли вообще сообщение от WebApp?
+    if (msg.web_app_data) {
+        console.log('Получены данные из WebApp:', msg.web_app_data.data);
+        
         try {
-            // Получаем JSON строку и превращаем в объект
             const data = JSON.parse(msg.web_app_data.data);
             
-            const item = data.item || 'Не указан';
-            const price = data.price || '0';
-            const game = data.game || 'Неизвестно';
-            const userId = data.userId || 'Не указан';
-
-            // Сообщение для тебя (админа)
             const adminMessage = `
-🔔 НОВЫЙ ЗАКАЗ!
-━━━━━━━━━━━━━━
-🛍 Товар: ${item}
-🎮 Игра: ${game}
-🆔 ID игрока: ${userId}
-💰 К оплате: ${price} ₽
-━━━━━━━━━━━━━━
-👤 Покупатель: @${msg.from.username || 'скрыто'}
-🆔 TG ID: ${msg.from.id}
+📦 НОВЫЙ ЗАКАЗ!
+🛍 Товар: ${data.item}
+🎮 Игра: ${data.game}
+🆔 ID: ${data.userId}
+💰 Цена: ${data.price} ₽
+👤 От: @${msg.from.username || 'id' + msg.from.id}
             `;
 
-            // 1. Отправляем уведомление тебе
             await bot.sendMessage(ADMIN_ID, adminMessage, { parse_mode: 'Markdown' });
-
-            // 2. Отправляем подтверждение пользователю
-            await bot.sendMessage(msg.chat.id, ✅ **Заказ принят!**\n\nВы выбрали: ${item}.\nОжидайте, мы свяжемся с вами для оплаты., { 
-                parse_mode: 'Markdown' 
-            });
+            await bot.sendMessage(msg.chat.id, '✅ Заказ получен!');
+            
+        } catch (e) {
+            // Если данные пришли, но они не в формате JSON
+            await bot.sendMessage(ADMIN_ID, `⚠️ Данные пришли, но ошибка в формате: ${msg.web_app_data.data}`);
+        }
+    } else {
+        // Это обычное текстовое сообщение (не из магазина)
+        console.log('Обычное сообщение от:', msg.from.id);
+    }
+});
 
             console.log(`Заказ от ${msg.from.id} успешно обработан.`);
 
@@ -70,4 +67,5 @@ bot.on('message', async (msg) => {
 });
 
 console.log('🚀 Бот на node-telegram-bot-api запущен!');
+
 
