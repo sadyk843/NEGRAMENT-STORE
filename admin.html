@@ -3,20 +3,32 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Админ-панель NEGRAMENT</title>
+<title>Админка NEGRAMENT</title>
 <style>
-body { font-family: 'Inter', sans-serif; background: #0f0f1a; color: white; padding: 20px; }
-h1 { text-align: center; color: #00c6ff; }
-.order-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; padding: 15px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; animation: fadeIn 0.5s ease; }
-.info b { color: #00c6ff; }
-.btn-delete { background: #ff4d4d; color: white; border: none; padding: 8px 15px; border-radius: 10px; cursor: pointer; font-weight: bold; }
-.btn-delete:hover { background: #ff1a1a; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+body { font-family: 'Segoe UI', sans-serif; background: #0a0a12; color: #e0e0e0; margin: 0; padding: 20px; }
+.header { text-align: center; border-bottom: 2px solid #00c6ff; padding-bottom: 10px; margin-bottom: 20px; }
+.stats { font-size: 1.2rem; color: #00c6ff; margin-bottom: 20px; text-align: center; }
+#orders-list { display: grid; gap: 15px; }
+.order-card { background: #161625; border: 1px solid #333; border-radius: 12px; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid #00c6ff; transition: 0.3s; }
+.order-card:hover { transform: scale(1.01); background: #1c1c2e; }
+.info b { color: #00c6ff; font-size: 1.1rem; }
+.info div { margin: 5px 0; }
+.btn-done { background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+.btn-done:hover { background: #218838; }
+.empty-msg { text-align: center; opacity: 0.5; margin-top: 50px; }
 </style>
 </head>
 <body>
-<h1>📦 Новые заказы</h1>
+
+<div class="header">
+<h1>Панель управления заказами</h1>
+</div>
+
+<div class="stats">Заказов в очереди: <span id="count">0</span></div>
+
 <div id="orders-list">Загрузка данных...</div>
+
+<audio id="notif-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -37,38 +49,48 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const ordersRef = ref(db, 'orders');
 
-// Слушаем изменения в базе в реальном времени
+let isFirstLoad = true;
+
 onValue(ordersRef, (snapshot) => {
-const ordersList = document.getElementById('orders-list');
-ordersList.innerHTML = '';
+const list = document.getElementById('orders-list');
+const countDisplay = document.getElementById('count');
 const data = snapshot.val();
 
 if (!data) {
-ordersList.innerHTML = '<p style="text-align:center">Заказов пока нет 😎</p>';
+list.innerHTML = '<div class="empty-msg"><h3>Пока нет активных заказов. Отдыхаем! ☕</h3></div>';
+countDisplay.innerText = "0";
 return;
 }
 
-// Перебираем заказы
-Object.keys(data).forEach(id => {
+const keys = Object.keys(data);
+countDisplay.innerText = keys.length;
+
+// Если пришел новый заказ после загрузки страницы — играем звук
+if (!isFirstLoad) {
+document.getElementById('notif-sound').play().catch(e => console.log("Нужно кликнуть по странице для активации звука"));
+}
+isFirstLoad = false;
+
+list.innerHTML = '';
+keys.reverse().forEach(id => {
 const order = data[id];
 const card = document.createElement('div');
 card.className = 'order-card';
 card.innerHTML = `
 <div class="info">
-<div><b>Товар:</b> ${order.item}</div>
-<div><b>Цена:</b> ${order.price} ₽</div>
-<div><b>ID/Ник:</b> ${order.userId}</div>
-<div style="font-size: 12px; opacity: 0.5;">${order.date}</div>
+<div><b>${order.item || 'Без названия'}</b></div>
+<div>💰 Цена: ${order.price} ₽</div>
+<div>🆔 Игрок: <span style="color:#fff">${order.userId}</span></div>
+<div style="font-size:0.8rem; opacity:0.6">${order.date || ''}</div>
 </div>
-<button class="btn-delete" onclick="deleteOrder('${id}')">Выполнено</button>
+<button class="btn-done" onclick="completeOrder('${id}')">ВЫПОЛНЕНО</button>
 `;
-ordersList.appendChild(card);
+list.appendChild(card);
 });
 });
 
-// Функция удаления заказа
-window.deleteOrder = (id) => {
-if (confirm('Удалить заказ? (Значит он выполнен)')) {
+window.completeOrder = (id) => {
+if (confirm('Удалить заказ?')) {
 remove(ref(db, 'orders/' + id));
 }
 };
