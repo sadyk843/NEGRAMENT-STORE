@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Админ-панель NEGRAMENT</title>
+<style>
+body { font-family: 'Inter', sans-serif; background: #0f0f1a; color: white; padding: 20px; }
+h1 { text-align: center; color: #00c6ff; }
+.order-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; padding: 15px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; animation: fadeIn 0.5s ease; }
+.info b { color: #00c6ff; }
+.btn-delete { background: #ff4d4d; color: white; border: none; padding: 8px 15px; border-radius: 10px; cursor: pointer; font-weight: bold; }
+.btn-delete:hover { background: #ff1a1a; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+<h1>📦 Новые заказы</h1>
+<div id="orders-list">Загрузка данных...</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+const firebaseConfig = {
+apiKey: "AIzaSyAYmlGDDBSPstA5pcEl_0TSk5DHZW63jb4",
+authDomain: "virtualstore-28707.firebaseapp.com",
+projectId: "virtualstore-28707",
+storageBucket: "virtualstore-28707.firebasestorage.app",
+messagingSenderId: "952425585401",
+appId: "1:952425585401:web:f3c90aa2ec0f643ee9a028",
+measurementId: "G-8RGXYRD22N",
+databaseURL: "https://virtualstore-28707-default-rtdb.europe-west1.firebasedatabase.app/"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const ordersRef = ref(db, 'orders');
+
+// Слушаем изменения в базе в реальном времени
+onValue(ordersRef, (snapshot) => {
+const ordersList = document.getElementById('orders-list');
+ordersList.innerHTML = '';
+const data = snapshot.val();
+
+if (!data) {
+ordersList.innerHTML = '<p style="text-align:center">Заказов пока нет 😎</p>';
+return;
+}
+
+// Перебираем заказы
+Object.keys(data).forEach(id => {
+const order = data[id];
+const card = document.createElement('div');
+card.className = 'order-card';
+card.innerHTML = `
+<div class="info">
+<div><b>Товар:</b> ${order.item}</div>
+<div><b>Цена:</b> ${order.price} ₽</div>
+<div><b>ID/Ник:</b> ${order.userId}</div>
+<div style="font-size: 12px; opacity: 0.5;">${order.date}</div>
+</div>
+<button class="btn-delete" onclick="deleteOrder('${id}')">Выполнено</button>
+`;
+ordersList.appendChild(card);
+});
+});
+
+// Функция удаления заказа
+window.deleteOrder = (id) => {
+if (confirm('Удалить заказ? (Значит он выполнен)')) {
+remove(ref(db, 'orders/' + id));
+}
+};
+</script>
+</body>
+</html>
