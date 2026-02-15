@@ -3,9 +3,9 @@ const TelegramBot = require('node-telegram-bot-api');
 // ==========================================
 // НАСТРОЙКИ (ЗАПОЛНИ СВОИ ДАННЫЕ)
 // ==========================================
-const token = 'ТВОЙ_ТОКЕН_ОТ_BOTFATHER'; // Вставь токен
-const ADMIN_ID = 123456789;              // Вставь свой цифровой ID
-const WEB_APP_URL = 'https://твой-сайт.vercel.app'; // Ссылка на магазин
+const token = '8542561341:AAEiHQk2tCyqdIF9dhr6GH6H7KNvbgi_-rY'; // Вставь токен
+const ADMIN_ID = 5814157480;              // Вставь свой цифровой ID
+const WEB_APP_URL = 'https://tg-shop-sigma.vercel.app'; // Ссылка на магазин
 // ==========================================
 
 // Создаем бота
@@ -70,3 +70,4 @@ bot.on('message', async (msg) => {
 });
 
 console.log('🚀 Бот на node-telegram-bot-api запущен!');
+
