@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEGRAMENT STORE</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getDatabase, ref, push, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+const firebaseConfig = {
+apiKey: "AIzaSyAYmlGDDBSPstA5pcEl_0TSk5DHZW63jb4",
+authDomain: "virtualstore-28707.firebaseapp.com",
+projectId: "virtualstore-28707",
+storageBucket: "virtualstore-28707.firebasestorage.app",
+messagingSenderId: "952425585401",
+appId: "1:952425585401:web:f3c90aa2ec0f643ee9a028",
+measurementId: "G-8RGXYRD22N",
+// ОБЯЗАТЕЛЬНО проверь эту ссылку, если создавал базу в Европе!
+databaseURL: "https://virtualstore-28707-default-rtdb.europe-west1.firebasedatabase.app/"
+};
+
+const app = initializeApp(firebaseConfig);
+const database = getDatabase(app);
+
+// Делаем инструменты Firebase доступными для обычных функций
+window.dbRef = ref;
+window.dbPush = push;
+window.dbSet = set;
+window.database = database;
+</script>
+
+<style>
+/* Твой оригинальный дизайн БЕЗ изменений */
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', -apple-system, sans-serif; }
+body { background: var(--bg-color); color: var(--text-color); padding: 20px; max-width: 500px; margin: 0 auto; min-height: 100vh; transition: 0.5s; }
+body.dark { --bg-color: linear-gradient(145deg, #0f0f1a 0%, #1a1a2e 100%); --text-color: #ffffff; --card-bg: rgba(255,255,255,0.05); --card-border: rgba(255,255,255,0.08); --header-bg: rgba(255,255,255,0.05); --button-gradient: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%); --secondary-text: rgba(255,255,255,0.6); --search-bg: rgba(255,255,255,0.05); --search-border: rgba(255,255,255,0.1); --input-bg: rgba(255,255,255,0.1); }
+body.light { --bg-color: linear-gradient(145deg, #f5f7fa 0%, #e9ecf0 100%); --text-color: #1a1a2e; --card-bg: rgba(255,255,255,0.9); --card-border: rgba(0,0,0,0.08); --header-bg: rgba(255,255,255,0.8); --button-gradient: linear-gradient(135deg, #0072ff 0%, #00c6ff 100%); --secondary-text: rgba(0,0,0,0.6); --search-bg: rgba(255,255,255,0.8); --search-border: rgba(0,0,0,0.1); --input-bg: rgba(0,0,0,0.05); }
+.store-header { background: var(--header-bg); backdrop-filter: blur(20px); border: 1px solid var(--card-border); border-radius: 24px; padding: 18px 24px; margin-bottom: 20px; font-size: 20px; font-weight: 800; text-align: center; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+.theme-toggle { background: var(--button-gradient); border: none; border-radius: 40px; padding: 8px 16px; color: white; font-weight: 600; cursor: pointer; }
+.search-input { width: 100%; padding: 16px 20px; background: var(--search-bg); border: 1px solid var(--search-border); border-radius: 20px; font-size: 16px; color: var(--text-color); margin-bottom: 20px; }
+.games-grid { display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px; }
+.game-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 28px; padding: 24px; cursor: pointer; transition: 0.3s; }
+.game-title { font-size: 22px; font-weight: 700; margin-bottom: 8px; background: var(--button-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.game-desc { font-size: 14px; color: var(--secondary-text); }
+.product-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 24px; padding: 20px; margin-bottom: 16px; }
+.buy-btn { background: var(--button-gradient); border: none; border-radius: 20px; padding: 18px; width: 100%; font-size: 18px; font-weight: 700; cursor: pointer; color: white; margin-top: 15px; }
+.back-btn { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px; padding: 12px; margin-bottom: 20px; width: 100%; color: var(--text-color); cursor: pointer; }
+.subgames-grid { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+.subgame-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 15px; padding: 12px; flex: 1; text-align: center; cursor: pointer; }
+.subgame-card.active { background: var(--button-gradient); color: white; }
+.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+.modal-overlay.active { display: flex; }
+.modal-window { background: var(--bg-color); border: 1px solid var(--card-border); border-radius: 32px; padding: 28px; width: 100%; max-width: 350px; }
+.input-field { width: 100%; padding: 12px; background: var(--input-bg); border: 1px solid var(--card-border); border-radius: 16px; color: var(--text-color); margin: 10px 0; }
+</style>
+</head>
+<body class="dark">
+<div class="store-header">
+<span>✦ NEGRAMENT ✦</span>
+<button class="theme-toggle" onclick="toggleTheme()">
+<span id="themeIcon">🌙</span>
+</button>
+</div>
+
+<div class="search-container">
+<input type="text" class="search-input" id="searchInput" placeholder="🔍 Поиск товаров..." oninput="handleSearch()">
+</div>
+
+<div id="content"></div>
+
+<div class="modal-overlay" id="confirmModal">
+<div class="modal-window">
+<div style="font-size: 24px; font-weight: 800; text-align: center; margin-bottom: 20px;">Оформление</div>
+<div id="modalDetails" style="margin-bottom: 15px; font-size: 14px; line-height: 1.6;"></div>
+<div id="modalPrice" style="font-size: 28px; font-weight: 800; text-align: center; color: #00c6ff; margin-bottom: 15px;"></div>
+<div style="background: rgba(0,198,255,0.1); padding: 10px; border-radius: 12px; font-size: 12px; text-align: center; margin-bottom: 15px;">
+Оплата (Озон Банк): <b>89324035777</b>
+</div>
+<input type="text" class="input-field" id="userInput" placeholder="Ваш ID / Nickname">
+<div style="display: flex; gap: 10px;">
+<button class="buy-btn" style="background: #333;" onclick="closeModal()">Отмена</button>
+<button class="buy-btn" id="confirmBtn" onclick="confirmPurchase()">Заказать</button>
+</div>
+</div>
+</div>
+
+<script>
+const tg = window.Telegram.WebApp;
+tg.expand();
+
+// Данные товаров
+const stars = [
+{ name: '50 ⭐', price: 66.5 }, { name: '100 ⭐', price: 133 }, { name: '500 ⭐', price: 660 }, { name: '1000 ⭐', price: 1300 }
+];
+const mlbb = [
+{ name: '50 + 5 Алмазов', price: 105, sub: 'ru' }, { name: '250 + 25 Алмазов', price: 470, sub: 'ru' },
+{ name: '78 + 8 Алмазов', price: 120, sub: 'global' }, { name: '156 + 16 Алмазов', price: 230, sub: 'global' }
+];
+
+let currentView = 'main';
+let pendingPurchase = null;
+
+function renderMain() {
+const content = document.getElementById('content');
+content.innerHTML = `
+<div class="games-grid">
+<div class="game-card" onclick="showCategory('stars')">
+<div class="game-title">Telegram Stars</div>
+<div class="game-desc">⭐ Быстрое пополнение баланса</div>
+</div>
+<div class="game-card" onclick="showCategory('mlbb')">
+<div class="game-title">Mobile Legends</div>
+<div class="game-desc">🎮 Алмазы для RU и Global</div>
+</div>
+</div>
+`;
+}
+
+function showCategory(cat) {
+const content = document.getElementById('content');
+let html = `<button class="back-btn" onclick="renderMain()">◀ В каталог</button>`;
+
+let list = (cat === 'stars') ? stars : mlbb;
+
+html += `<div class="products-grid">`;
+list.forEach(item => {
+html += `
+<div class="product-card">
+<div style="font-weight: 700;">${item.name} ${item.sub ? `(${item.sub.toUpperCase()})` : ''}</div>
+<div style="color: #00c6ff; font-size: 20px; font-weight: 800; margin: 10px 0;">${item.price} ₽</div>
+<button class="buy-btn" onclick="openModal('${item.name}', ${item.price})">Купить</button>
+</div>
+`;
+});
+html += `</div>`;
+content.innerHTML = html;
+}
+
+function openModal(name, price) {
+pendingPurchase = { name, price };
+document.getElementById('modalDetails').innerHTML = `Товар: <b>${name}</b>`;
+document.getElementById('modalPrice').innerText = price + ' ₽';
+document.getElementById('confirmModal').classList.add('active');
+}
+
+function closeModal() {
+document.getElementById('confirmModal').classList.remove('active');
+}
+
+async function confirmPurchase() {
+const userVal = document.getElementById('userInput').value.trim();
+if (!userVal) return alert("Введите ваш ID!");
+
+const btn = document.getElementById('confirmBtn');
+btn.innerText = "⏳...";
+btn.disabled = true;
+
+const order = {
+item: pendingPurchase.name,
+price: pendingPurchase.price,
+userId: userVal,
+date: new Date().toLocaleString(),
+customer: tg.initDataUnsafe?.user?.username || "Anonymous"
+};
+
+try {
+// 1. ПИШЕМ В FIREBASE
+const newRef = window.dbPush(window.dbRef(window.database, 'orders'));
+await window.dbSet(newRef, order);
+
+// 2. ОТПРАВЛЯЕМ В БОТА
+tg.sendData(JSON.stringify(order));
+
+tg.showAlert("✅ Заказ успешно оформлен!");
+closeModal();
+} catch (e) {
+alert("Ошибка базы: " + e.message);
+console.error(e);
+} finally {
+btn.innerText = "Заказать";
+btn.disabled = false;
+}
+}
+
+function toggleTheme() {
+document.body.classList.toggle('dark');
+document.body.classList.toggle('light');
+document.getElementById('themeIcon').innerText = document.body.classList.contains('dark') ? '🌙' : '☀️';
+}
+
+renderMain();
+</script>
+</body>
+</html>
