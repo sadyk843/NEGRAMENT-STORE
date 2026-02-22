@@ -1222,7 +1222,7 @@ animation: fadeIn 0.5s ease;
 <div id="modalDetails" style="margin-bottom: 15px; font-size: 14px; line-height: 1.6; background: var(--card-bg); padding: 15px; border-radius: 12px;"></div>
 <div id="modalPrice" style="font-size: 28px; font-weight: 800; text-align: center; color: #00c6ff; margin-bottom: 15px;"></div>
 <div style="background: rgba(0,198,255,0.1); padding: 10px; border-radius: 12px; font-size: 12px; text-align: center; margin-bottom: 15px;">
-💳 <b>Вам отпишет модератор </b> 
+💳 <b>Вам отпишет модератор </b>
 </div>
 <input type="text" class="input-field" id="userInput" placeholder="👤 Ваш ID / Nickname">
 <div style="display: flex; gap: 10px;">
@@ -1294,12 +1294,28 @@ const genshinCrystals = [
 { name: '6480 + 1600', bonus: 1600, price: 6600, tags: ['genshin', 'crystals'] }
 ];
 
+// ========== PUBG ==========
+const pubgMobile = [
+{ name: '60 UC', price: 90, tags: ['pubg', 'mobile'] },
+{ name: '300 + 25 UC', bonus: 25, price: 400, tags: ['pubg', 'mobile'] },
+{ name: '600 + 60 UC', bonus: 60, price: 800, tags: ['pubg', 'mobile'] },
+{ name: '1500 + 300 UC', bonus: 300, price: 2000, tags: ['pubg', 'mobile'] }
+];
+
+const pubgNewState = [
+{ name: '1500 + 80 MC', bonus: 80, price: 450, tags: ['pubg', 'newstate'] },
+{ name: '3600 + 250 MC', bonus: 250, price: 1050, tags: ['pubg', 'newstate'] },
+{ name: '9300 + 930 MC', bonus: 930, price: 2650, tags: ['pubg', 'newstate'] }
+];
+
 const allProducts = [
 ...stars,
 ...mlbbRu.map(p => ({ ...p, subgame: 'ru' })),
 ...mlbbGlobal.map(p => ({ ...p, subgame: 'global' })),
 ...genshinTime.map(p => ({ ...p, subgame: 'time' })),
-...genshinCrystals.map(p => ({ ...p, subgame: 'crystals' }))
+...genshinCrystals.map(p => ({ ...p, subgame: 'crystals' })),
+...pubgMobile.map(p => ({ ...p, subgame: 'mobile' })),
+...pubgNewState.map(p => ({ ...p, subgame: 'newstate' }))
 ];
 
 const games = [
@@ -1474,7 +1490,8 @@ if (currentStoreView === 'main') {
 const categories = [
 { id: 'stars', icon: '⭐', name: 'Telegram Stars', desc: '1.33₽ = 1 ⭐ • Скидки' },
 { id: 'mlbb', icon: '🎮', name: 'Mobile Legends', desc: 'RU и Global серверы' },
-{ id: 'genshin', icon: '⏳', name: 'Genshin Impact', desc: 'Гранулы и кристаллы' }
+{ id: 'genshin', icon: '⏳', name: 'Genshin Impact', desc: 'Гранулы и кристаллы' },
+{ id: 'pubg', icon: '🔫', name: 'PUBG', desc: 'Mobile (код) / New State (UID)' }
 ];
 html += '<div class="store-grid">';
 categories.forEach(cat => {
@@ -1555,6 +1572,28 @@ html += `<div class="product-card">
 html += '</div>';
 } else {
 html += '<div class="no-results">👆 Выберите тип</div>';
+}
+} else if (currentGame === 'pubg') {
+html += '<div class="subgames-grid">';
+html += `<div class="subgame-card ${currentSubgame === 'mobile' ? 'active' : ''}" onclick="selectSubgame('mobile')"><span class="subgame-icon">📱</span> Mobile (код)</div>`;
+html += `<div class="subgame-card ${currentSubgame === 'newstate' ? 'active' : ''}" onclick="selectSubgame('newstate')"><span class="subgame-icon">🆕</span> New State (UID)</div>`;
+html += '</div>';
+if (currentSubgame) {
+let products = [], title = '';
+if (currentSubgame === 'mobile') { products = pubgMobile; title = 'Mobile'; }
+else { products = pubgNewState; title = 'New State'; }
+html += '<div class="products-grid">';
+products.forEach(item => {
+let bonus = item.bonus ? `<span class="bonus-badge">+${item.bonus}</span>` : '';
+html += `<div class="product-card">
+<div class="product-title">${item.name} ${bonus} <span class="server-badge">${title}</span></div>
+<div class="product-price">${item.price} ₽</div>
+<button class="play-btn" onclick="openModal('${item.name} (${title})', ${item.price})">📦 Заказать</button>
+</div>`;
+});
+html += '</div>';
+} else {
+html += '<div class="no-results">👆 Выберите игру</div>';
 }
 }
 return html;
